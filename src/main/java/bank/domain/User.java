@@ -7,8 +7,8 @@ public final class User {
 
     private final UUID id;
     private final String login;
-    private String passwordHash;
-    private String passwordSalt;
+    private final String passwordHash;
+    private final String passwordSalt;
 
     public User(UUID id, String login, String passwordHash, String passwordSalt) {
         this.id = DomainValidation.requireNotNull(id, "no id specified ");
@@ -37,15 +37,6 @@ public final class User {
 
     public String passwordSalt() {
         return passwordSalt;
-    }
-
-    public void changePassword(String passwordHash, String passwordSalt) {
-        String validatedHash = DomainValidation.requireNonBlank(
-                passwordHash, "pswd hash cant be empty");
-        String validatedSalt = DomainValidation.requireNonBlank(
-                passwordSalt, "pswd salt cant be empty");
-        this.passwordHash = validatedHash;
-        this.passwordSalt = validatedSalt;
     }
 
     @Override

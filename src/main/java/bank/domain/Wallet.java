@@ -59,6 +59,10 @@ public final class Wallet {
         return ownerId;
     }
 
+    public long nextCategoryId() {
+        return nextCategoryId;
+    }
+
     public long addCategory(TransactionType type, String name) {
         TransactionType requiredType = DomainValidation.requireNotNull(
                 type, "category type not specified");
