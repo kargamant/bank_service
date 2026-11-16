@@ -57,7 +57,7 @@ else пользователь найден
         end
       end
 
-      PersistenceService -> WalletRepository: save(wallet)
+      PersistenceService -> WalletRepository: restore(wallet)
       PersistenceService --> AuthService: wallet
     end
 

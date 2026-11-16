@@ -23,7 +23,7 @@ else проверка успешна
   FinanceService -> FinanceService: create Transaction
   FinanceService -> Wallet: addTransaction(categoryId, transaction)
   Wallet -> Wallet: verify type and append to category list
-  FinanceService -> WalletRepository: save(wallet)
+  FinanceService -> WalletRepository: markDirty(userId)
 
   alt добавлен расход
     FinanceService -> Wallet: budgetStatus(categoryId)

@@ -24,7 +24,7 @@ else категория существует
   Wallet -> Wallet: categoryNames[type].remove(categoryId)
   Wallet -> Wallet: budgets.remove(categoryId)
   Wallet --> CategoryService: number of moved transactions
-  CategoryService -> WalletRepository: save(wallet)
+  CategoryService -> WalletRepository: markDirty(userId)
 
   opt автоматическое сохранение включено (SHOULD)
     CategoryService -> PersistenceService: saveWallet(userId)

@@ -43,8 +43,8 @@ else предварительная проверка успешна
       TransferService -> SenderWallet: addTransaction(0, expense)
       note right: 0 - дефолтная категория
       TransferService -> RecipientWallet: addTransaction(0, income)
-      TransferService -> WalletRepository: save(SenderWallet)
-      TransferService -> WalletRepository: save(RecipientWallet)
+      TransferService -> WalletRepository: markDirty(senderId)
+      TransferService -> WalletRepository: markDirty(recipient.id)
     end
 
     alt ошибка изменения одного из кошельков

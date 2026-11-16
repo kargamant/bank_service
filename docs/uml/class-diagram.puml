@@ -11,7 +11,6 @@ package "domain" {
     - login: String
     - passwordHash: String
     - passwordSalt: String
-    + changePassword(hash: String, salt: String): void
   }
 
   class Wallet <<aggregate root>> {
@@ -58,7 +57,6 @@ package "application" {
   class AuthService {
     + register(login: String, password: char[]): User
     + login(login: String, password: char[]): Session
-    + changePassword(userId: UUID, oldPassword: char[], newPassword: char[]): void
   }
 
   class CategoryService
@@ -91,12 +89,14 @@ package "ports" {
   interface UserRepository {
     + findByLogin(login: String): Optional<User>
     + findById(id: UUID): Optional<User>
-    + save(user: User): void
+    + add(user: User): void
   }
 
   interface WalletRepository {
     + findByOwnerId(ownerId: UUID): Optional<Wallet>
-    + save(wallet: Wallet): void
+    + add(wallet: Wallet): void
+    + restore(wallet: Wallet): void
+    + markDirty(ownerId: UUID): void
   }
 
   interface PasswordHasher {
