@@ -35,6 +35,10 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Application runtime data ###
+/data/
+/exports/
+
 docs/requirements.md
 docs/domain-model.md
 docs/cli-commands.md
