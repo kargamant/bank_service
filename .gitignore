@@ -37,3 +37,5 @@ build/
 
 docs/requirements.md
 docs/domain-model.md
+docs/cli-commands.md
+docs/data-storage.md
