@@ -1,0 +1,140 @@
+@startuml
+title uml диаграмма
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty members
+
+package "domain" {
+  class User <<entity>> {
+    - id: UUID
+    - login: String
+    - passwordHash: String
+    - passwordSalt: String
+    + changePassword(hash: String, salt: String): void
+  }
+
+  class Wallet <<aggregate root>> {
+    {static} - UNCATEGORIZED_ID: long = 0
+    - ownerId: UUID
+    - categoryNames: EnumMap<TransactionType, Map<Long, String>>
+    - transactionsByCategory: Map<Long, List<Transaction>>
+    - budgets: Map<Long, BigDecimal>
+    + addCategory(type: TransactionType, name: String): long
+    + renameCategory(type: TransactionType, categoryId: long, name: String): void
+    + removeCategory(type: TransactionType, categoryId: long): void
+    + addTransaction(categoryId: long, transaction: Transaction): void
+    + transactions(categoryId: long): List<Transaction>
+    + setBudget(categoryId: long, limit: BigDecimal): void
+    + removeBudget(categoryId: long): void
+    + balance(): BigDecimal
+    + total(type: TransactionType): BigDecimal
+    + budgetStatus(categoryId: long): BudgetStatus
+  }
+
+  class Transaction <<entity>> {
+    - id: UUID
+    - type: TransactionType
+    - amount: BigDecimal
+    - createdAt: LocalDateTime
+    - description: String?
+    - transferId: UUID?
+  }
+
+  class BudgetStatus <<value object>> {
+    + limit: BigDecimal
+    + spent: BigDecimal
+    + remaining: BigDecimal
+    + exceeded: boolean
+  }
+
+  enum TransactionType {
+    INCOME
+    EXPENSE
+  }
+}
+
+package "application" {
+  class AuthService {
+    + register(login: String, password: char[]): User
+    + login(login: String, password: char[]): Session
+    + changePassword(userId: UUID, oldPassword: char[], newPassword: char[]): void
+  }
+
+  class CategoryService
+  class FinanceService
+  class BudgetService
+  class StatisticsService {
+    + summarize(ownerId: UUID): FinancialSummary
+    + summarizeCategories(ownerId: UUID, categoryNames: Set<String>): FinancialSummary
+  }
+  class TransferService
+  class ImportExportService
+  class PersistenceService
+
+  class Session {
+    - currentUserId: UUID?
+    + isAuthenticated(): boolean
+  }
+
+  class FinancialSummary <<read model>> {
+    + totalIncome: BigDecimal
+    + totalExpense: BigDecimal
+    + balance: BigDecimal
+    + incomeByCategory: Map<String, BigDecimal>
+    + expenseByCategory: Map<String, BigDecimal>
+    + budgetStatuses: Map<String, BudgetStatus>
+  }
+}
+
+package "ports" {
+  interface UserRepository {
+    + findByLogin(login: String): Optional<User>
+    + findById(id: UUID): Optional<User>
+    + save(user: User): void
+  }
+
+  interface WalletRepository {
+    + findByOwnerId(ownerId: UUID): Optional<Wallet>
+    + save(wallet: Wallet): void
+  }
+
+  interface PasswordHasher {
+    + hash(password: char[], salt: byte[]): String
+    + matches(password: char[], hash: String, salt: byte[]): boolean
+  }
+
+  interface UserFileStore
+  interface WalletFileStore
+  interface ReportExporter
+  interface SnapshotPort
+}
+
+User "1" -- "1" Wallet : owns >
+Wallet "1" *-- "0..*" Transaction
+Wallet --> TransactionType : groups category names by type
+Transaction --> TransactionType
+Wallet ..> BudgetStatus : creates
+StatisticsService ..> FinancialSummary : creates
+FinancialSummary ..> BudgetStatus
+
+AuthService --> UserRepository
+AuthService --> WalletRepository
+AuthService --> PasswordHasher
+AuthService --> Session
+CategoryService --> WalletRepository
+FinanceService --> WalletRepository
+BudgetService --> WalletRepository
+StatisticsService --> WalletRepository
+TransferService --> UserRepository
+TransferService --> WalletRepository
+ImportExportService --> WalletRepository
+ImportExportService --> ReportExporter
+ImportExportService --> SnapshotPort
+PersistenceService --> UserRepository
+PersistenceService --> WalletRepository
+PersistenceService --> UserFileStore
+PersistenceService --> WalletFileStore
+
+@enduml
+

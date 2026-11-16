@@ -1,0 +1,71 @@
+@startuml
+title Авторизация и загрузка кошелька
+
+actor User
+boundary CLI
+control AuthService
+control PersistenceService
+entity UserRepository
+entity WalletRepository
+database UserFileStore
+database WalletFileStore
+control PasswordHasher
+control Session
+
+== Загрузка пользователей при запуске ==
+CLI -> PersistenceService: loadUsers()
+PersistenceService -> UserFileStore: loadAll()
+UserFileStore --> PersistenceService: users
+PersistenceService -> UserRepository: replaceAll(users)
+PersistenceService --> CLI: success / warning
+
+== Вход ==
+User -> CLI: login(login, password)
+CLI -> AuthService: login(login, password)
+AuthService -> UserRepository: findByLogin(login)
+UserRepository --> AuthService: Optional<User>
+
+alt пользователь не найден
+  AuthService --> CLI: authentication error
+  CLI --> User: authentication error
+else пользователь найден
+  AuthService -> PasswordHasher: matches(password, hash, salt)
+  PasswordHasher --> AuthService: true / false
+
+  alt пароль неверен
+    AuthService --> CLI: authentication error
+    CLI --> User: authentication error
+  else пароль верен
+    AuthService -> WalletRepository: findByOwnerId(user.id)
+    WalletRepository --> AuthService: Optional<Wallet>
+
+    alt кошелёк ещё не загружен в память
+      AuthService -> PersistenceService: loadWallet(user.id)
+      PersistenceService -> WalletFileStore: load(user.id)
+
+      alt файл кошелька существует и корректен
+        WalletFileStore --> PersistenceService: Wallet
+      else файл отсутствует
+        WalletFileStore --> PersistenceService: empty
+        PersistenceService -> PersistenceService: createEmptyWallet(user.id)
+      else файл повреждён
+        WalletFileStore --> PersistenceService: read error
+        PersistenceService --> AuthService: load error
+        break авторизация прекращена
+          AuthService --> CLI: login failed without active session
+          CLI --> User: ошибка загрузки кошелька
+        end
+      end
+
+      PersistenceService -> WalletRepository: save(wallet)
+      PersistenceService --> AuthService: wallet
+    end
+
+    AuthService -> Session: start(user.id)
+    AuthService --> CLI: authenticated user
+    CLI --> User: вход выполнен
+  end
+end
+
+@enduml
+

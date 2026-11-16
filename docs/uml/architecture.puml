@@ -1,0 +1,98 @@
+@startuml
+title Архитектура
+
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+package "CLI" {
+  [ConsoleApplication]
+  [CommandParser]
+  [CommandHandler]
+  [TablePrinter]
+}
+
+package "Application" {
+  [AuthService]
+  [CategoryService]
+  [FinanceService]
+  [BudgetService]
+  [StatisticsService]
+  [TransferService]
+  [ImportExportService]
+  [PersistenceService]
+  [Session]
+}
+
+package "Domain" {
+  [User]
+  [Wallet]
+  [Transaction]
+}
+
+package "Ports" {
+  interface UserRepository
+  interface WalletRepository
+  interface UserFileStore
+  interface WalletFileStore
+  interface PasswordHasher
+  interface ReportExporter
+  interface SnapshotPort
+}
+
+package "Infrastructure" {
+  [InMemoryUserRepository]
+  [InMemoryWalletRepository]
+  [JsonUserFileStore]
+  [JsonWalletFileStore]
+  [Pbkdf2PasswordHasher]
+  [CsvReportExporter]
+  [JsonSnapshotAdapter]
+}
+
+[ConsoleApplication] --> [CommandParser]
+[ConsoleApplication] --> [CommandHandler]
+[CommandHandler] --> [AuthService]
+[CommandHandler] --> [CategoryService]
+[CommandHandler] --> [FinanceService]
+[CommandHandler] --> [BudgetService]
+[CommandHandler] --> [StatisticsService]
+[CommandHandler] --> [TransferService]
+[CommandHandler] --> [ImportExportService]
+[CommandHandler] --> [PersistenceService]
+[CommandHandler] --> [Session]
+[CommandHandler] --> [TablePrinter]
+
+[AuthService] --> [User]
+[CategoryService] --> [Wallet]
+[FinanceService] --> [Wallet]
+[BudgetService] --> [Wallet]
+[StatisticsService] --> [Wallet]
+[TransferService] --> [Wallet]
+
+[AuthService] --> UserRepository
+[AuthService] --> WalletRepository
+[AuthService] --> PasswordHasher
+[CategoryService] --> WalletRepository
+[FinanceService] --> WalletRepository
+[BudgetService] --> WalletRepository
+[StatisticsService] --> WalletRepository
+[TransferService] --> UserRepository
+[TransferService] --> WalletRepository
+[ImportExportService] --> WalletRepository
+[ImportExportService] --> ReportExporter
+[ImportExportService] --> SnapshotPort
+[PersistenceService] --> UserRepository
+[PersistenceService] --> WalletRepository
+[PersistenceService] --> UserFileStore
+[PersistenceService] --> WalletFileStore
+
+[InMemoryUserRepository] ..|> UserRepository
+[InMemoryWalletRepository] ..|> WalletRepository
+[JsonUserFileStore] ..|> UserFileStore
+[JsonWalletFileStore] ..|> WalletFileStore
+[Pbkdf2PasswordHasher] ..|> PasswordHasher
+[CsvReportExporter] ..|> ReportExporter
+[JsonSnapshotAdapter] ..|> SnapshotPort
+
+@enduml
+

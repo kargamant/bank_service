@@ -1,0 +1,67 @@
+@startuml
+title Перевод между кошельками пользователей
+
+actor Sender
+boundary CLI
+control TransferService
+control PersistenceService
+entity UserRepository
+entity WalletRepository
+entity SenderWallet
+entity RecipientWallet
+
+Sender -> CLI: transfer(recipientLogin, amount)
+CLI -> TransferService: transfer(senderId, recipientLogin, amount)
+TransferService -> TransferService: validate amount and sender
+TransferService -> UserRepository: findByLogin(recipientLogin)
+UserRepository --> TransferService: Optional<User>
+
+alt получатель не найден или данные некорректны
+  TransferService --> CLI: validation error
+  CLI --> Sender: validation error
+else предварительная проверка успешна
+  TransferService -> WalletRepository: findByOwnerId(senderId)
+  WalletRepository --> TransferService: SenderWallet
+  TransferService -> WalletRepository: findByOwnerId(recipient.id)
+  WalletRepository --> TransferService: Optional<RecipientWallet>
+
+  alt кошелёк получателя ещё не загружен
+    TransferService -> PersistenceService: loadWallet(recipient.id)
+    PersistenceService --> TransferService: RecipientWallet / load error
+  end
+
+  TransferService -> TransferService: validate both wallets
+
+  alt проверка кошельков не пройдена
+    TransferService --> CLI: transfer error
+    CLI --> Sender: перевод не выполнен
+  else оба кошелька готовы
+    TransferService -> TransferService: create transferId
+    TransferService -> TransferService: prepare expense and income
+
+    group единое изменение в памяти
+      TransferService -> SenderWallet: addTransaction(0, expense)
+      note right: 0 - дефолтная категория
+      TransferService -> RecipientWallet: addTransaction(0, income)
+      TransferService -> WalletRepository: save(SenderWallet)
+      TransferService -> WalletRepository: save(RecipientWallet)
+    end
+
+    alt ошибка изменения одного из кошельков
+      TransferService -> TransferService: rollback both wallet changes
+      TransferService --> CLI: transfer error
+      CLI --> Sender: перевод отменён
+    else оба кошелька успешно изменены
+      opt автоматическое сохранение
+        TransferService -> PersistenceService: saveWallets(senderId, recipient.id)
+        PersistenceService --> TransferService: saved / both remain dirty
+      end
+
+      TransferService --> CLI: transfer result and warnings
+      CLI --> Sender: перевод выполнен / предупреждение о сохранении
+    end
+  end
+end
+
+@enduml
+

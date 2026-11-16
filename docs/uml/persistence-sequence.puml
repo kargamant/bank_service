@@ -1,0 +1,34 @@
+@startuml
+title сохранение состояния
+
+actor User
+boundary CLI
+control PersistenceService
+entity UserRepository
+entity WalletRepository
+database UserFileStore
+database WalletFileStore
+
+== Сохранение изменённого состояния ==
+User -> CLI: save / logout / exit
+CLI -> PersistenceService: saveDirtyState()
+PersistenceService -> UserRepository: findDirtyUsers()
+UserRepository --> PersistenceService: users
+PersistenceService -> WalletRepository: findDirtyWallets()
+WalletRepository --> PersistenceService: wallets
+PersistenceService -> UserFileStore: saveAtomically(users)
+UserFileStore --> PersistenceService: success / error
+PersistenceService -> WalletFileStore: saveAtomically(wallets)
+WalletFileStore --> PersistenceService: success / error
+
+alt всё сохранено
+  PersistenceService -> UserRepository: markClean(users)
+  PersistenceService -> WalletRepository: markClean(wallets)
+  PersistenceService --> CLI: success
+  CLI --> User: данные сохранены
+else ошибка записи
+  PersistenceService --> CLI: error; state remains dirty in memory
+  CLI --> User: данные не сохранены
+end
+
+@enduml

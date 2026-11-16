@@ -1,0 +1,38 @@
+@startuml
+title Удаление категории и перенос транзакций
+
+actor User
+boundary CLI
+control CategoryService
+control PersistenceService
+entity WalletRepository
+entity Wallet
+
+User -> CLI: category delete(type, categoryId)
+CLI -> CategoryService: removeCategory(userId, type, categoryId)
+CategoryService -> WalletRepository: findByOwnerId(userId)
+WalletRepository --> CategoryService: Wallet
+CategoryService -> Wallet: removeCategory(type, categoryId)
+
+alt categoryId = 0 или категория не существует
+  Wallet --> CategoryService: validation error
+  CategoryService --> CLI: validation error
+  CLI --> User: понятное сообщение
+else категория существует
+  Wallet -> Wallet: removed = transactionsByCategory.remove(categoryId)
+  Wallet -> Wallet: transactionsByCategory[0].addAll(removed)
+  Wallet -> Wallet: categoryNames[type].remove(categoryId)
+  Wallet -> Wallet: budgets.remove(categoryId)
+  Wallet --> CategoryService: number of moved transactions
+  CategoryService -> WalletRepository: save(wallet)
+
+  opt автоматическое сохранение включено (SHOULD)
+    CategoryService -> PersistenceService: saveWallet(userId)
+    PersistenceService --> CategoryService: saved / unsaved warning
+  end
+
+  CategoryService --> CLI: result and warnings
+  CLI --> User: категория удалена, операции перенесены в категорию 0
+end
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+title Добавление дохода или расхода
+
+actor User
+boundary CLI
+control FinanceService
+control PersistenceService
+entity WalletRepository
+entity Wallet
+
+User -> CLI: income/expense add(amount, category, description?)
+CLI -> FinanceService: addTransaction(userId, type, amount, categoryName, description)
+FinanceService -> FinanceService: validate amount and required fields
+FinanceService -> WalletRepository: findByOwnerId(userId)
+WalletRepository --> FinanceService: Wallet
+FinanceService -> Wallet: findCategoryId(categoryName, type)
+Wallet --> FinanceService: Optional<long>
+
+alt данные или категория некорректны
+  FinanceService --> CLI: validation error
+  CLI --> User: validation error
+else проверка успешна
+  FinanceService -> FinanceService: create Transaction
+  FinanceService -> Wallet: addTransaction(categoryId, transaction)
+  Wallet -> Wallet: verify type and append to category list
+  FinanceService -> WalletRepository: save(wallet)
+
+  alt добавлен расход
+    FinanceService -> Wallet: budgetStatus(categoryId)
+    Wallet --> FinanceService: status or no budget
+    FinanceService -> Wallet: total(INCOME), total(EXPENSE)
+    Wallet --> FinanceService: totals
+    FinanceService -> FinanceService: build required warnings
+  end
+
+  opt автоматическое сохранение
+    FinanceService -> PersistenceService: saveWallet(userId)
+    PersistenceService --> FinanceService: saved / unsaved warning
+  end
+
+  FinanceService --> CLI: transaction result and warnings
+  CLI --> User: подтверждение и предупреждения
+end
+
+@enduml
+
