@@ -46,6 +46,17 @@ public final class InMemoryWalletRepository implements WalletRepository {
     }
 
     @Override
+    public void replace(Wallet wallet) {
+        Objects.requireNonNull(wallet, "wallet");
+        if (!walletsByOwnerId.containsKey(wallet.ownerId())) {
+            throw new IllegalStateException(
+                    "wallet is not loaded for owner " + wallet.ownerId());
+        }
+        walletsByOwnerId.put(wallet.ownerId(), wallet);
+        dirtyOwnerIds.add(wallet.ownerId());
+    }
+
+    @Override
     public void markDirty(UUID ownerId) {
         Objects.requireNonNull(ownerId, "ownerId");
         if (!walletsByOwnerId.containsKey(ownerId)) {

@@ -13,6 +13,8 @@ public interface WalletRepository {
 
     void restore(Wallet wallet);
 
+    void replace(Wallet wallet);
+
     void markDirty(UUID ownerId);
 
     Collection<Wallet> findDirty();
