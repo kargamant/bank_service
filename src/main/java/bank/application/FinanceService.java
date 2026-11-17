@@ -7,8 +7,11 @@ import bank.domain.Wallet;
 import bank.ports.WalletRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public final class FinanceService {
@@ -39,6 +42,26 @@ public final class FinanceService {
         Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
         long categoryId = ServiceSupport.requireCategoryId(wallet, categoryName);
         return wallet.transactions(categoryId);
+    }
+
+    public List<TransactionView> transactionViews(UUID ownerId) {
+        Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
+        Set<Long> categoryIds = new LinkedHashSet<>();
+        categoryIds.add(Wallet.UNCATEGORIZED_ID);
+        for (TransactionType type : TransactionType.values()) {
+            categoryIds.addAll(wallet.categoryNames(type).keySet());
+        }
+        return categoryIds.stream()
+                .flatMap(categoryId -> transactionViews(wallet, categoryId).stream())
+                .sorted(Comparator.comparing(TransactionView::createdAt)
+                        .thenComparing(TransactionView::id))
+                .toList();
+    }
+
+    public List<TransactionView> transactionViews(UUID ownerId, String categoryName) {
+        Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
+        long categoryId = ServiceSupport.requireCategoryId(wallet, categoryName);
+        return transactionViews(wallet, categoryId);
     }
 
     private TransactionResult addTransaction(
@@ -85,5 +108,20 @@ public final class FinanceService {
                     totalExpense,
                     totalIncome));
         }
+    }
+
+    private static List<TransactionView> transactionViews(
+            Wallet wallet, long categoryId) {
+        String categoryName = wallet.categoryName(categoryId).orElse("category " + categoryId);
+        return wallet.transactions(categoryId).stream()
+                .map(transaction -> new TransactionView(
+                        transaction.id(),
+                        transaction.type(),
+                        transaction.amount(),
+                        categoryName,
+                        transaction.createdAt(),
+                        transaction.description().orElse(null),
+                        transaction.transferId().orElse(null)))
+                .toList();
     }
 }

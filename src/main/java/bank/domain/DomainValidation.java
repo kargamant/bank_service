@@ -2,11 +2,13 @@ package bank.domain;
 
 import java.math.BigDecimal;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import bank.domain.exception.DomainValidationException;
 
 final class DomainValidation {
 
     private static final int MAX_MONEY_SCALE = 1;
+    private static final Pattern LETTERS_AND_SPACES = Pattern.compile("[\\p{L} ]+");
 
     private DomainValidation() {
     }
@@ -43,7 +45,16 @@ final class DomainValidation {
 
     static String normalizeCategoryName(String value) {
         String trimmed = requireNonBlank(value, "category name cannot be empty");
-        return trimmed.replaceAll("\\s+", " ");
+        String normalized = trimmed.replaceAll(" +", " ");
+        return requireLettersAndSpaces(normalized, "category name");
+    }
+
+    static String requireLettersAndSpaces(String value, String fieldName) {
+        if (!LETTERS_AND_SPACES.matcher(value).matches()) {
+            throw new DomainValidationException(
+                    fieldName + " may contain only letters and spaces");
+        }
+        return value;
     }
 
     static String categoryNameKey(String value) {

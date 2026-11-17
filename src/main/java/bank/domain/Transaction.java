@@ -101,6 +101,9 @@ public final class Transaction {
             return null;
         }
         String trimmed = description.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return trimmed.isEmpty()
+                ? null
+                : DomainValidation.requireLettersAndSpaces(
+                        trimmed, "transaction description");
     }
 }
