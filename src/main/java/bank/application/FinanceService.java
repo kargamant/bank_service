@@ -28,10 +28,22 @@ public final class FinanceService {
                 ownerId, TransactionType.INCOME, amount, categoryName, description);
     }
 
+    public TransactionResult addIncome(
+            UUID ownerId, BigDecimal amount, String description) {
+        return addUncategorizedTransaction(
+                ownerId, TransactionType.INCOME, amount, description);
+    }
+
     public TransactionResult addExpense(
             UUID ownerId, BigDecimal amount, String categoryName, String description) {
         return addTransaction(
                 ownerId, TransactionType.EXPENSE, amount, categoryName, description);
+    }
+
+    public TransactionResult addExpense(
+            UUID ownerId, BigDecimal amount, String description) {
+        return addUncategorizedTransaction(
+                ownerId, TransactionType.EXPENSE, amount, description);
     }
 
     public List<Transaction> transactions(UUID ownerId) {
@@ -72,6 +84,26 @@ public final class FinanceService {
             String description) {
         Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
         long categoryId = ServiceSupport.requireCategoryId(wallet, categoryName, type);
+        return addTransaction(ownerId, wallet, type, amount, categoryId, description);
+    }
+
+    private TransactionResult addUncategorizedTransaction(
+            UUID ownerId,
+            TransactionType type,
+            BigDecimal amount,
+            String description) {
+        Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
+        return addTransaction(
+                ownerId, wallet, type, amount, Wallet.UNCATEGORIZED_ID, description);
+    }
+
+    private TransactionResult addTransaction(
+            UUID ownerId,
+            Wallet wallet,
+            TransactionType type,
+            BigDecimal amount,
+            long categoryId,
+            String description) {
         Transaction transaction = Transaction.create(type, amount, description);
         wallet.addTransaction(categoryId, transaction);
         walletRepository.markDirty(ownerId);
@@ -85,7 +117,9 @@ public final class FinanceService {
                 if (budgetStatus.exceeded()) {
                     warnings.add(new FinancialWarning(
                             WarningType.BUDGET_EXCEEDED,
-                            wallet.categoryName(categoryId).orElse(categoryName),
+                            wallet.categoryName(categoryId).orElseThrow(() ->
+                                    new IllegalStateException(
+                                            "category is missing for id " + categoryId)),
                             budgetStatus.spent(),
                             budgetStatus.limit()));
                 }

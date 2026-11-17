@@ -206,18 +206,27 @@ public final class CommandHandler {
 
     private boolean handleTransaction(List<String> tokens, TransactionType type) {
         String command = lower(tokens.getFirst());
-        requireRange(tokens, 4, 5,
-                command + " add <amount> <category> [description]");
+        requireRange(tokens, 3, 5,
+                command + " add <amount> [category|-] [description]");
         if (!"add".equals(lower(tokens.get(1)))) {
             throw new CommandSyntaxException(
                     command + " supports only the add action");
         }
         UUID ownerId = currentUserId();
         BigDecimal amount = parseAmount(tokens.get(2));
+        String category = tokens.size() >= 4 ? tokens.get(3) : null;
         String description = tokens.size() == 5 ? tokens.get(4) : null;
-        TransactionResult result = type == TransactionType.INCOME
-                ? financeService.addIncome(ownerId, amount, tokens.get(3), description)
-                : financeService.addExpense(ownerId, amount, tokens.get(3), description);
+        boolean uncategorized = category == null || "-".equals(category);
+        TransactionResult result;
+        if (type == TransactionType.INCOME) {
+            result = uncategorized
+                    ? financeService.addIncome(ownerId, amount, description)
+                    : financeService.addIncome(ownerId, amount, category, description);
+        } else {
+            result = uncategorized
+                    ? financeService.addExpense(ownerId, amount, description)
+                    : financeService.addExpense(ownerId, amount, category, description);
+        }
         out.println("Transaction added: " + result.transaction().id());
         out.println("Balance: " + TablePrinter.money(result.balance()));
         result.optionalBudgetStatus().ifPresent(status -> out.println(
@@ -379,8 +388,10 @@ public final class CommandHandler {
 
         out.println("Income by category:");
         printAmountMap(summary.incomeByCategory());
+        out.println();
         out.println("Expense by category:");
         printAmountMap(summary.expenseByCategory());
+        out.println();
         out.println("Budgets:");
         List<List<String>> budgetRows = summary.budgetStatuses().entrySet().stream()
                 .map(entry -> budgetRow(entry.getKey(), entry.getValue()))

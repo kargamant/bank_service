@@ -12,8 +12,8 @@ final class CommandHelp {
               login <login> <password>
               logout | save | exit
               category add|list|rename|delete ...
-              income add <amount> <category> [description]
-              expense add <amount> <category> [description]
+              income add <amount> [category|-] [description]
+              expense add <amount> [category|-] [description]
               transactions [category]
               budget set|edit|delete|list ...
               summary [categories <category> ...]
@@ -21,7 +21,10 @@ final class CommandHelp {
               export csv|json <path>
               import json <path>
 
-            Example: expense add 300.0 "food" "burger king"
+            Examples:
+              expense add 300.0 "food" "burger king"
+              expense add 300.0
+              expense add 300.0 - "no category"
             """;
 
     private static final Map<String, String> TOPICS = Map.ofEntries(
@@ -33,8 +36,8 @@ final class CommandHelp {
                     category rename <current-name> <new-name>
                     category delete <name>
                     """),
-            Map.entry("income", "income add <amount> <category> [description]"),
-            Map.entry("expense", "expense add <amount> <category> [description]"),
+            Map.entry("income", "income add <amount> [category|-] [description]"),
+            Map.entry("expense", "expense add <amount> [category|-] [description]"),
             Map.entry("transactions", "transactions [category]"),
             Map.entry("budget", """
                     budget set <category> <amount>
