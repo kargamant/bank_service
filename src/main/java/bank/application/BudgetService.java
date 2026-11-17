@@ -1,7 +1,6 @@
 package bank.application;
 
-import bank.application.exception.ConflictException;
-import bank.application.exception.ResourceNotFoundException;
+import bank.application.exception.ApplicationException;
 import bank.domain.BudgetStatus;
 import bank.domain.TransactionType;
 import bank.domain.Wallet;
@@ -26,7 +25,7 @@ public final class BudgetService {
         long categoryId = ServiceSupport.requireCategoryId(
                 wallet, categoryName, TransactionType.EXPENSE);
         if (wallet.budgets().containsKey(categoryId)) {
-            throw new ConflictException("budget already exists for category " + categoryName);
+            throw new ApplicationException("budget already exists for category " + categoryName);
         }
         wallet.setBudget(categoryId, limit);
         walletRepository.markDirty(ownerId);
@@ -63,7 +62,7 @@ public final class BudgetService {
     private static void requireBudget(
             Wallet wallet, long categoryId, String categoryName) {
         if (!wallet.budgets().containsKey(categoryId)) {
-            throw new ResourceNotFoundException(
+            throw new ApplicationException(
                     "budget not found for category " + categoryName);
         }
     }

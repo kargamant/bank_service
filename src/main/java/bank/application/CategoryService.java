@@ -1,6 +1,6 @@
 package bank.application;
 
-import bank.application.exception.ConflictException;
+import bank.application.exception.ApplicationException;
 import bank.domain.TransactionType;
 import bank.domain.Wallet;
 import bank.ports.WalletRepository;
@@ -47,7 +47,7 @@ public final class CategoryService {
         Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
         long categoryId = ServiceSupport.requireCategoryId(wallet, currentName);
         TransactionType type = wallet.categoryType(categoryId)
-                .orElseThrow(() -> new ConflictException(
+                .orElseThrow(() -> new ApplicationException(
                         "system category cannot be renamed"));
         wallet.renameCategory(type, categoryId, newName);
         walletRepository.markDirty(ownerId);
@@ -58,7 +58,7 @@ public final class CategoryService {
         Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
         long categoryId = ServiceSupport.requireCategoryId(wallet, categoryName);
         TransactionType type = wallet.categoryType(categoryId)
-                .orElseThrow(() -> new ConflictException(
+                .orElseThrow(() -> new ApplicationException(
                         "system category cannot be deleted"));
         wallet.removeCategory(type, categoryId);
         walletRepository.markDirty(ownerId);

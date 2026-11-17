@@ -1,6 +1,6 @@
 package bank.application;
 
-import bank.application.exception.ResourceNotFoundException;
+import bank.application.exception.ApplicationException;
 import bank.domain.TransactionType;
 import bank.domain.Wallet;
 import bank.ports.WalletRepository;
@@ -16,13 +16,13 @@ final class ServiceSupport {
         Objects.requireNonNull(repository, "repository");
         UUID requiredOwnerId = Objects.requireNonNull(ownerId, "ownerId");
         return repository.findByOwnerId(requiredOwnerId)
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new ApplicationException(
                         "wallet is not loaded for owner " + requiredOwnerId));
     }
 
     static long requireCategoryId(Wallet wallet, String categoryName) {
         return wallet.findCategoryId(categoryName)
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new ApplicationException(
                         "category not found: " + categoryName));
     }
 
@@ -30,10 +30,10 @@ final class ServiceSupport {
             Wallet wallet, String categoryName, TransactionType expectedType) {
         long categoryId = requireCategoryId(wallet, categoryName);
         TransactionType actualType = wallet.categoryType(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new ApplicationException(
                         "category cannot be used for a manual transaction: " + categoryName));
         if (actualType != expectedType) {
-            throw new ResourceNotFoundException(
+            throw new ApplicationException(
                     "category has another transaction type: " + categoryName);
         }
         return categoryId;

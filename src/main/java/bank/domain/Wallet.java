@@ -12,10 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
-import bank.domain.exception.BudgetNotFoundException;
-import bank.domain.exception.CategoryNotFoundException;
-import bank.domain.exception.DuplicateCategoryException;
-import bank.domain.exception.DomainValidationException;
+import bank.domain.exception.DomainException;
 
 public final class Wallet {
 
@@ -163,7 +160,7 @@ public final class Wallet {
             TransactionType type = categoryType(categoryId).orElseThrow(
                     () -> categoryNotFound(categoryId));
             if (type != requiredTransaction.type()) {
-                throw new DomainValidationException(
+                throw new DomainException(
                         "transaction type does not match category type");
             }
         }
@@ -187,7 +184,7 @@ public final class Wallet {
 
     public void removeBudget(long categoryId) {
         if (budgets.remove(categoryId) == null) {
-            throw new BudgetNotFoundException(
+            throw new DomainException(
                     "budget for category id " + categoryId + " not found");
         }
     }
@@ -222,7 +219,7 @@ public final class Wallet {
     public BudgetStatus budgetStatus(long categoryId) {
         BigDecimal limit = budgets.get(categoryId);
         if (limit == null) {
-            throw new BudgetNotFoundException(
+            throw new DomainException(
                     "budget for category id " + categoryId + " not found");
         }
         BigDecimal spent = total(categoryId, TransactionType.EXPENSE);
@@ -278,14 +275,14 @@ public final class Wallet {
     private void ensureUniqueCategoryName(String displayName, Long ignoredCategoryId) {
         String nameKey = DomainValidation.categoryNameKey(displayName);
         if (DomainValidation.categoryNameKey(UNCATEGORIZED_NAME).equals(nameKey)) {
-            throw new DuplicateCategoryException(
+            throw new DomainException(
                     "name \"" + UNCATEGORIZED_NAME + "\" is reserved by system");
         }
         for (Map<Long, String> names : categoryNames.values()) {
             for (Map.Entry<Long, String> entry : names.entrySet()) {
                 if ((ignoredCategoryId == null || !entry.getKey().equals(ignoredCategoryId))
                         && DomainValidation.categoryNameKey(entry.getValue()).equals(nameKey)) {
-                    throw new DuplicateCategoryException(
+                    throw new DomainException(
                             "category named \"" + displayName + "\" already exists");
                 }
             }
@@ -294,7 +291,7 @@ public final class Wallet {
 
     private void ensureMutableCategoryId(long categoryId) {
         if (categoryId == UNCATEGORIZED_ID) {
-            throw new DomainValidationException(
+            throw new DomainException(
                     "system default category " + UNCATEGORIZED_NAME + " cannot be changed");
         }
     }
@@ -302,13 +299,13 @@ public final class Wallet {
     private void ensureExpenseCategory(long categoryId) {
         if (categoryId == UNCATEGORIZED_ID
                 || !categoryNames.get(TransactionType.EXPENSE).containsKey(categoryId)) {
-            throw new DomainValidationException(
+            throw new DomainException(
                     "budget can only be set for an existing expense category");
         }
     }
 
-    private static CategoryNotFoundException categoryNotFound(long categoryId) {
-        return new CategoryNotFoundException(
+    private static DomainException categoryNotFound(long categoryId) {
+        return new DomainException(
                 "category with id " + categoryId + " not found");
     }
 }

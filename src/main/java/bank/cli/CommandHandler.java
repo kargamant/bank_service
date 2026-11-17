@@ -18,7 +18,6 @@ import bank.application.TransferResult;
 import bank.application.TransferService;
 import bank.application.WarningType;
 import bank.application.exception.ApplicationException;
-import bank.application.exception.AuthorizationException;
 import bank.domain.BudgetStatus;
 import bank.domain.TransactionType;
 import bank.domain.exception.DomainException;
@@ -450,7 +449,7 @@ public final class CommandHandler {
 
     private void requireGuest() {
         if (session.isAuthenticated()) {
-            throw new AuthorizationException("logout before registering another user");
+            throw new ApplicationException("logout before registering another user");
         }
     }
 

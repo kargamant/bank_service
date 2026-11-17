@@ -1,6 +1,6 @@
 package bank.application;
 
-import bank.application.exception.AuthorizationException;
+import bank.application.exception.ApplicationException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,14 +18,14 @@ public final class Session {
 
     public UUID requireUserId() {
         if (currentUserId == null) {
-            throw new AuthorizationException("authentication is required");
+            throw new ApplicationException("authentication is required");
         }
         return currentUserId;
     }
 
     void start(UUID userId) {
         if (isAuthenticated()) {
-            throw new AuthorizationException("another user is already authenticated");
+            throw new ApplicationException("another user is already authenticated");
         }
         currentUserId = java.util.Objects.requireNonNull(userId, "userId");
     }

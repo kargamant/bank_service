@@ -1,6 +1,6 @@
 package bank.application;
 
-import bank.application.exception.ConflictException;
+import bank.application.exception.ApplicationException;
 import bank.domain.Wallet;
 import bank.ports.ReportExporter;
 import bank.ports.SnapshotPort;
@@ -45,7 +45,7 @@ public final class ImportExportService {
         ServiceSupport.requireWallet(walletRepository, requiredOwnerId);
         Wallet snapshot = snapshotPort.read(Objects.requireNonNull(source, "source"));
         if (!requiredOwnerId.equals(snapshot.ownerId())) {
-            throw new ConflictException("snapshot belongs to another user");
+            throw new ApplicationException("snapshot belongs to another user");
         }
         walletRepository.replace(snapshot);
         return snapshot;

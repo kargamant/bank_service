@@ -1,8 +1,6 @@
 package bank.application;
 
-import bank.application.exception.AuthenticationException;
-import bank.application.exception.AuthorizationException;
-import bank.application.exception.ConflictException;
+import bank.application.exception.ApplicationException;
 import bank.domain.User;
 import bank.domain.Wallet;
 import bank.ports.PasswordHasher;
@@ -37,7 +35,7 @@ public final class AuthService {
         String normalizedLogin = requireLogin(login);
         requirePassword(password);
         if (userRepository.findByLogin(normalizedLogin).isPresent()) {
-            throw new ConflictException("login already exists: " + normalizedLogin);
+            throw new ApplicationException("login already exists: " + normalizedLogin);
         }
 
         byte[] salt = passwordHasher.generateSalt();
@@ -52,7 +50,7 @@ public final class AuthService {
 
     public Session login(String login, char[] password) {
         if (session.isAuthenticated()) {
-            throw new AuthorizationException("logout before signing in as another user");
+            throw new ApplicationException("logout before signing in as another user");
         }
         String normalizedLogin = requireLogin(login);
         requirePassword(password);
@@ -63,7 +61,7 @@ public final class AuthService {
         try {
             salt = Base64.getDecoder().decode(user.passwordSalt());
         } catch (IllegalArgumentException exception) {
-            throw new AuthenticationException("stored password salt is invalid", exception);
+            throw new ApplicationException("stored password salt is invalid", exception);
         }
 
         if (!passwordHasher.matches(password, user.passwordHash(), salt)) {
@@ -83,18 +81,18 @@ public final class AuthService {
 
     private static String requireLogin(String login) {
         if (login == null || login.isBlank()) {
-            throw new AuthenticationException("login cannot be empty");
+            throw new ApplicationException("login cannot be empty");
         }
         return login.trim();
     }
 
     private static void requirePassword(char[] password) {
         if (password == null || password.length == 0) {
-            throw new AuthenticationException("password cannot be empty");
+            throw new ApplicationException("password cannot be empty");
         }
     }
 
-    private static AuthenticationException invalidCredentials() {
-        return new AuthenticationException("invalid login or password");
+    private static ApplicationException invalidCredentials() {
+        return new ApplicationException("invalid login or password");
     }
 }

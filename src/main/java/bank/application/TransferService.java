@@ -1,7 +1,6 @@
 package bank.application;
 
-import bank.application.exception.ConflictException;
-import bank.application.exception.ResourceNotFoundException;
+import bank.application.exception.ApplicationException;
 import bank.domain.Transaction;
 import bank.domain.TransactionType;
 import bank.domain.User;
@@ -36,15 +35,15 @@ public final class TransferService {
             BigDecimal amount,
             String description) {
         User sender = userRepository.findById(Objects.requireNonNull(senderId, "senderId"))
-                .orElseThrow(() -> new ResourceNotFoundException("sender not found"));
+                .orElseThrow(() -> new ApplicationException("sender not found"));
         if (recipientLogin == null || recipientLogin.isBlank()) {
-            throw new ResourceNotFoundException("recipient login cannot be empty");
+            throw new ApplicationException("recipient login cannot be empty");
         }
         User recipient = userRepository.findByLogin(recipientLogin.trim())
-                .orElseThrow(() -> new ResourceNotFoundException(
+                .orElseThrow(() -> new ApplicationException(
                         "recipient not found: " + recipientLogin.trim()));
         if (sender.id().equals(recipient.id())) {
-            throw new ConflictException("cannot transfer money to the same wallet");
+            throw new ApplicationException("cannot transfer money to the same wallet");
         }
 
         Wallet senderWallet = persistenceService.loadWallet(sender.id());

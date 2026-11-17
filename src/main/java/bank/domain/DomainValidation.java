@@ -3,7 +3,7 @@ package bank.domain;
 import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import bank.domain.exception.DomainValidationException;
+import bank.domain.exception.DomainException;
 
 final class DomainValidation {
 
@@ -15,14 +15,14 @@ final class DomainValidation {
 
     static <T> T requireNotNull(T value, String message) {
         if (value == null) {
-            throw new DomainValidationException(message);
+            throw new DomainException(message);
         }
         return value;
     }
 
     static String requireNonBlank(String value, String message) {
         if (value == null || value.isBlank()) {
-            throw new DomainValidationException(message);
+            throw new DomainException(message);
         }
         return value.trim();
     }
@@ -30,7 +30,7 @@ final class DomainValidation {
     static BigDecimal requirePositiveMoney(BigDecimal value, String fieldName) {
         BigDecimal requiredValue = requireMoney(value, fieldName);
         if (requiredValue.signum() <= 0) {
-            throw new DomainValidationException(fieldName + " must be greater than zero");
+            throw new DomainException(fieldName + " must be greater than zero");
         }
         return requiredValue;
     }
@@ -38,7 +38,7 @@ final class DomainValidation {
     static BigDecimal requireNonNegativeMoney(BigDecimal value, String fieldName) {
         BigDecimal requiredValue = requireMoney(value, fieldName);
         if (requiredValue.signum() < 0) {
-            throw new DomainValidationException(fieldName + " cannot be negative");
+            throw new DomainException(fieldName + " cannot be negative");
         }
         return requiredValue;
     }
@@ -51,7 +51,7 @@ final class DomainValidation {
 
     static String requireLettersAndSpaces(String value, String fieldName) {
         if (!LETTERS_AND_SPACES.matcher(value).matches()) {
-            throw new DomainValidationException(
+            throw new DomainException(
                     fieldName + " may contain only letters and spaces");
         }
         return value;
@@ -63,10 +63,10 @@ final class DomainValidation {
 
     private static BigDecimal requireMoney(BigDecimal value, String fieldName) {
         if (value == null) {
-            throw new DomainValidationException(fieldName + " is not specified");
+            throw new DomainException(fieldName + " is not specified");
         }
         if (value.stripTrailingZeros().scale() > MAX_MONEY_SCALE) {
-            throw new DomainValidationException(
+            throw new DomainException(
                     fieldName + " must have no more than one decimal place");
         }
         return value;
