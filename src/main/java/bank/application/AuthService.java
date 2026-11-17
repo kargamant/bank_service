@@ -81,10 +81,6 @@ public final class AuthService {
         session.close();
     }
 
-    public Session session() {
-        return session;
-    }
-
     private static String requireLogin(String login) {
         if (login == null || login.isBlank()) {
             throw new AuthenticationException("login cannot be empty");

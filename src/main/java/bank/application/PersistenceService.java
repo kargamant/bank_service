@@ -67,15 +67,6 @@ public final class PersistenceService {
         userRepository.markClean(dirtyUsers.stream().map(User::id).toList());
     }
 
-    public void saveWallet(UUID ownerId) {
-        UUID requiredOwnerId = Objects.requireNonNull(ownerId, "ownerId");
-        Wallet wallet = walletRepository.findByOwnerId(requiredOwnerId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "wallet for owner " + requiredOwnerId + " is not loaded"));
-        walletFileStore.save(wallet);
-        walletRepository.markClean(List.of(requiredOwnerId));
-    }
-
     public void saveWallets(Collection<UUID> ownerIds) {
         Objects.requireNonNull(ownerIds, "ownerIds");
         Set<UUID> uniqueOwnerIds = new LinkedHashSet<>(ownerIds);
@@ -99,9 +90,5 @@ public final class PersistenceService {
         saveUsers();
         Collection<Wallet> dirtyWallets = walletRepository.findDirty();
         saveWallets(dirtyWallets.stream().map(Wallet::ownerId).toList());
-    }
-
-    public boolean hasUnsavedChanges() {
-        return userRepository.hasDirty() || walletRepository.hasDirty();
     }
 }

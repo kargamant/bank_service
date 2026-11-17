@@ -76,10 +76,6 @@ public final class Transaction {
         return Optional.ofNullable(transferId);
     }
 
-    public boolean isTransfer() {
-        return transferId != null;
-    }
-
     @Override
     public boolean equals(Object other) {
         if (this == other) {

@@ -46,16 +46,6 @@ public final class FinanceService {
                 ownerId, TransactionType.EXPENSE, amount, description);
     }
 
-    public List<Transaction> transactions(UUID ownerId) {
-        return ServiceSupport.requireWallet(walletRepository, ownerId).allTransactions();
-    }
-
-    public List<Transaction> transactions(UUID ownerId, String categoryName) {
-        Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
-        long categoryId = ServiceSupport.requireCategoryId(wallet, categoryName);
-        return wallet.transactions(categoryId);
-    }
-
     public List<TransactionView> transactionViews(UUID ownerId) {
         Wallet wallet = ServiceSupport.requireWallet(walletRepository, ownerId);
         Set<Long> categoryIds = new LinkedHashSet<>();

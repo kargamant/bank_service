@@ -179,14 +179,6 @@ public final class Wallet {
         return List.copyOf(transactions);
     }
 
-    public List<Transaction> allTransactions() {
-        return transactionsByCategory.values().stream()
-                .flatMap(Collection::stream)
-                .sorted(Comparator.comparing(Transaction::createdAt)
-                        .thenComparing(Transaction::id))
-                .toList();
-    }
-
     public void setBudget(long categoryId, BigDecimal limit) {
         ensureExpenseCategory(categoryId);
         budgets.put(categoryId,
